@@ -180,6 +180,7 @@ void INT0_Init(void) {
 }
 // External interrupt 0 service routine
 ISR(INT0_vect) {
+	TCNT1 = 0;
 	seconds = 0;
 	minutes = 0;
 	hours = 0;
