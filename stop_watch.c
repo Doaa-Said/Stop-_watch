@@ -183,7 +183,6 @@ ISR(INT0_vect) {
 	seconds = 0;
 	minutes = 0;
 	hours = 0;
-	Timer1_CTC_init();
 	GIFR |= 1 << INTF0;
 
 //reset stop watch
