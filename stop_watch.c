@@ -11,7 +11,7 @@
 unsigned char seconds = 0;
 unsigned char minutes = 0;
 unsigned char hours = 0;
-unsigned char flag = 0;//toggle mode button flag
+unsigned char flag = 0; //toggle mode button flag
 void Timer1_CTC_init(void); //initialize timer1&set clock&mode
 void INT0_Init(void); // External Interrupt 0 initialization
 void INT1_Init(void); // External Interrupt 1 initialization
@@ -20,12 +20,12 @@ void display(void); // Function to update the display
 void IO_PORTS_init(void); // Function to initialize I/O ports
 
 int main(void) {
-	SREG |= 1 << 7; //Enable global interrupts
 	Timer1_CTC_init();
-	INT1_Init();
 	INT0_Init();
+	INT1_Init();
 	INT2_Init();
 	IO_PORTS_init();
+	SREG |= 1 << 7; //Enable global interrupts
 
 	for (;;) {
 		display();
@@ -41,8 +41,8 @@ int main(void) {
 		}
 		display(); // Update display
 //Alarm
-		if ((hours == 0) && (minutes == 0) && (seconds == 0) && (PORTD & 1 << 5)
-				&& (TCCR1B & 1 << CS10) && (TCCR1B & (1 << CS12)))
+		if ((hours == 0) && (minutes == 0) && (seconds == 0)
+&& (PORTD & 1 << 5)&& (TCCR1B & 1 << CS10) && (TCCR1B & (1 << CS12)))
 			PORTD |= 1 << 0;
 		//turn on buzzer if hrs&mins&secs reach zero in count down mode
 		else
@@ -138,12 +138,12 @@ void Timer1_CTC_init(void) {
 ISR(TIMER1_COMPA_vect) {
 	SREG |= 1 << 7;
 	if (PORTD & (1 << 4)) { // count up mode(red led indicator)
-		seconds++;
-		if (seconds == 60) {
+		if (seconds <= 59)
+			seconds++;
+		else if (seconds == 60) {
 			minutes++;
 			seconds = 0;
-		}
-		if (minutes == 60) {
+		} else if (minutes == 60) {
 			hours++;
 			minutes = 0;
 			seconds = 0;
@@ -183,18 +183,23 @@ ISR(INT0_vect) {
 	seconds = 0;
 	minutes = 0;
 	hours = 0;
+	Timer1_CTC_init();
+	GIFR |= 1 << INTF0;
+
 //reset stop watch
 }
 // External Interrupt 1 initialization
 void INT1_Init(void) {
-	DDRD &= ~(1 << 2);	// Set PD3 as input
-	MCUCR |= 1 << ISC11 | 1 << ISC10;	//// Trigger on rising edge
+	DDRD &= ~(1 << 3);	// Set PD3 as input
+	MCUCR |= 1 << ISC11 | 1 << ISC10;	// Trigger on rising edge
 	GICR |= 1 << INT1;	// // Enable INT1
 }
 // External interrupt 1 service routine
 ISR(INT1_vect) {
+	
 	TCCR1B &= ~(1 << CS10) & ~(1 << CS11) & ~(1 << CS12);
-//stop Timer1
+	GIFR |= 1 << INTF1;
+//stop Timer1}
 //pause stop watch
 }
 // External Interrupt 2 initialization
@@ -206,8 +211,8 @@ void INT2_Init(void) {
 }
 // External interrupt 2 service routine
 ISR(INT2_vect) {
-
 	TCCR1B |= 1 << CS10 | 1 << CS12;
+	GIFR |= 1 << INTF2;
 // resume stop watch
 }
 // Function to update the display
